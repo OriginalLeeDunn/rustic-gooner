@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy::input::ButtonInput;
-use bevy::input::keyboard::KeyCode;
+use bevy::input::keyboard::{KeyCode, KeyboardInput};
 use reqwest::blocking::get;
 use bevy::app::AppExit;
 
@@ -18,6 +18,7 @@ enum AppState {
     #[default]
     MainMenu,
     InGame,
+    Settings,
 }
 
 fn main() {
@@ -32,6 +33,7 @@ fn main() {
             menu_action_system.run_if(in_state(AppState::MainMenu)),
             fetch_from_server.run_if(in_state(AppState::MainMenu)),
             main_menu_controls.run_if(in_state(AppState::MainMenu)),
+            menu_keyboard_system.run_if(in_state(AppState::MainMenu)),
         ))
         .run();
 }
@@ -61,7 +63,7 @@ fn setup_main_menu(mut commands: Commands, _asset_server: Res<AssetServer>) {
             },
             ..default()
         }).with_children(|parent| {
-            for label in &["Play", "Quit"] {
+            for label in &["Play", "Quit", "Settings"] {
                 parent.spawn((ButtonBundle {
                     style: Style {
                         width: Val::Px(200.0),
@@ -102,6 +104,8 @@ fn menu_action_system(
                     next_state.set(AppState::InGame);
                 } else if button_text == "Quit" {
                     exit.send(AppExit);
+                } else if button_text == "Settings" {
+                    next_state.set(AppState::Settings);
                 }
             }
             Interaction::Hovered => {
@@ -111,6 +115,15 @@ fn menu_action_system(
                 text.sections[0].style.color = Color::RED;
             }
         }
+    }
+}
+
+fn menu_keyboard_system(
+    keys: Res<ButtonInput<KeyCode>>,
+    mut exit: EventWriter<AppExit>,
+) {
+    if keys.just_pressed(KeyCode::Escape) {
+        exit.send(AppExit);
     }
 }
 
@@ -126,6 +139,14 @@ fn setup_game() {
 
 fn cleanup_game() {
     println!("Game cleanup");
+}
+
+fn settings_menu() {
+    println!("Settings menu");
+}
+
+fn cleanup_settings_menu() {
+    println!("Settings menu cleanup");
 }
 
 fn main_menu_controls(
